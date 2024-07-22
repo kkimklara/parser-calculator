@@ -1,0 +1,49 @@
+CFLAGS = -g
+
+all:	  purewc purecalc cppcalc
+
+# reentrant flex and bison
+
+purewc:	purewc.lex.o
+	cc -g -o $@ purewc.lex.c
+
+purewc.lex.c: purewc.l
+	flex -opurewc.lex.c purewc.l
+
+purecalc:	purecalc.lex.o purecalc.tab.o purecalcfuncs.o
+	cc -g -o $@ purecalc.tab.o purecalc.lex.o purecalcfuncs.o -lm
+
+purecalc.lex.o: purecalc.lex.c purecalc.tab.h purecalc.h
+
+purecalc.tab.o: purecalc.tab.c purecalc.lex.h purecalc.h
+
+purecalc.lex.c purecalc.lex.h: purecalc.l
+	flex -opurecalc.lex.c purecalc.l
+
+purecalc.tab.c purecalc.tab.h: purecalc.y
+	bison -vd purecalc.y
+
+# C++ bison and C++ compatible flex
+
+cppcalc:	cppcalc.lex.o cppcalc.tab.o
+	c++ -g -o $@ cppcalc.tab.o cppcalc.lex.o -lm
+
+cppcalc.lex.o: cppcalc.lex.c cppcalc.tab.hh cppcalc-ctx.hh
+	c++ -c $<
+
+cppcalc.tab.o: cppcalc.tab.cc cppcalc-ctx.hh
+
+cppcalc.lex.c: cppcalc.l
+	flex -ocppcalc.lex.c cppcalc.l
+
+cppcalc.tab.cc cppcalc.tab.hh: cppcalc.yy
+	bison -vd cppcalc.yy
+
+clean:
+	rm -f purewc purecalc cppcalc \
+	purecalc.lex.c purecalc.lex.h purecalc.tab.c purecalc.tab.h \
+	purewc.lex.c purewc.lex.o \
+	purecalc.lex.o purecalc.tab.o purecalcfuncs.o purecalc.output \
+	cppcalc.lex.c cppcalc.tab.c cppcalc.tab.cc cppcalc.tab.hh \
+	cppcalc.lex.o cppcalc.tab.o cppcalc.output \
+	location.hh position.hh stack.hh
